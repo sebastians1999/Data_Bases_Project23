@@ -1,4 +1,4 @@
-def parse_text_file(file_to_parse):
+def parse_generated_entities(file_to_parse):
     entities = []
     current_entity = {}
     with open(file_to_parse, 'r') as file:
@@ -17,5 +17,5 @@ def parse_text_file(file_to_parse):
 
 #parse the text_file
 path_of_file_to_parse = "generated_entities.txt"
-parsed_entities = parse_text_file(path_of_file_to_parse)
+parsed_entities = parse_generated_entities(path_of_file_to_parse)
 print(parsed_entities)
