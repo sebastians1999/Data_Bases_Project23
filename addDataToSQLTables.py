@@ -57,8 +57,8 @@ for entity in parsed_entities:
     # Team
     if 'Team' == entity['category']:
         # print(entity)
-        query = "INSERT INTO team (teamId, numberOfPlayers) VALUES (%s, %s)"
-        values = (entity['id'], entity['n_members'])
+        query = "INSERT INTO team (team_ID, team_name, number_of_players) VALUES (%s, %s, %s)"
+        values = (entity['id'], entity['team_name'], entity['n_members'])
         cursor.execute(query, values)
 
 conn.commit()
