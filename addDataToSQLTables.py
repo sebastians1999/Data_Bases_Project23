@@ -22,15 +22,16 @@ cursor = conn.cursor()
 path_of_file_to_parse = "generated_entities.txt"
 parsed_entities = parseGeneratedEntities.parse_generated_entities(path_of_file_to_parse)
 
+#simple method to clear a table
+def clear_table(table_to_clear):
+    query = "DELETE FROM " + table_to_clear
+    cursor.execute(query)
+
 #clearing all tables before entering info again
-query = "DELETE FROM item;"
-cursor.execute(query)
-query = "DELETE FROM event;"
-cursor.execute(query)
-query = "DELETE FROM enemy;"
-cursor.execute(query)
-query = "DELETE FROM team;"
-cursor.execute(query)
+clear_table("item")
+clear_table("event")
+clear_table("enemy")
+clear_table("team")
 
 for entity in parsed_entities:
     # Items
