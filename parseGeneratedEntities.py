@@ -25,5 +25,5 @@ path_of_file_to_parse = "generated_entities.txt"
 parsed_entities = parse_generated_entities(path_of_file_to_parse)
 
 # for entity in parsed_entities[:10]:
-#     print(entity)
+#   print(entity)
 

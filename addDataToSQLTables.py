@@ -9,6 +9,12 @@ db_user = os.environ.get('DB_USER')
 db_password = os.environ.get('DB_PASSWORD')
 db_database = os.environ.get('DB_DATABASE')
 
+
+db_host = "localhost"
+db_user = "root"
+db_password = "Bordcomputer3"
+db_database = "MysticQuestDBgit"
+
 conn = mysql.connector.connect(
     host=db_host,
     user=db_user,
