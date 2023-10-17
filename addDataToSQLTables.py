@@ -28,14 +28,18 @@ cursor = conn.cursor()
 path_of_file_to_parse = "generated_entities.txt"
 parsed_entities = parseGeneratedEntities.parse_generated_entities(path_of_file_to_parse)
 
+def clear_key_constraints(table_to_clear):
+    query = "ALTER TABLE " + table_to_clear + " DISABLE KEYS;"
+    cursor.execute(query)
+
 #simple method to clear a table
 def clear_table(table_to_clear):
     query = "DELETE FROM " + table_to_clear
-    print(query)
+    #print(query)
     cursor.execute(query)
 
 #clearing all tables before entering info again
-# clear_table("character")
+clear_table("characters")
 clear_table("item")
 clear_table("enemy")
 clear_table("event")
@@ -44,18 +48,12 @@ clear_table("team")
 
 for entity in parsed_entities:
     #Character table is being a big piece of shit poopy idiot idk try to see if you can fix it
-    # # Character
-    # if 'Character' == entity['category']:
-    #     # print(entity)
-    #     query = "INSERT INTO character (id, name, race, class) VALUES (%s, %s, %s, %s)"
-    #     values = (entity['id'], entity['first_name'] + " " + entity['firstname'], entity['race'], entity['class'])
-    #     cursor.execute(query, values)
-
-    # Items
-    if 'Item' == entity['category']:
+    #NEVERMIND :DDDD
+    # Character
+    if 'Character' == entity['category']:
         # print(entity)
-        query = "INSERT INTO item (id, name) VALUES (%s, %s)"
-        values = (entity['id'], entity['item_name'])
+        query = "INSERT INTO characters (id, name, race, class) VALUES (%s, %s, %s, %s)"
+        values = (entity['id'], entity['first_name'] + " " + entity['firstname'], entity['race'], entity['class'])
         cursor.execute(query, values)
         
     # Enemy
@@ -72,8 +70,20 @@ for entity in parsed_entities:
         values = (entity['id'], entity['event_name'])
         cursor.execute(query, values)
 
+    # Guilds
+    if 'GuildName' == entity['category']:
+        #print(entity)
+        query = "INSERT INTO guild"
+
+    # Items
+    if 'Item' == entity['category']:
+        # print(entity)
+        query = "INSERT INTO item (id, name) VALUES (%s, %s)"
+        values = (entity['id'], entity['item_name'])
+        cursor.execute(query, values)
+
     # NPC
-    if 'NPC' == entity['category']:
+    if ('NPC' == entity['category'] or 'Vendors' == entity['category']):
         # print(entity)
         query = "INSERT INTO npc (id, name, role) VALUES (%s, %s, %s)"
         values = (entity['id'], entity['first_name'] + " " + entity['last_name'], entity['npc_type'])
