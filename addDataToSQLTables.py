@@ -1,7 +1,9 @@
+import ast
 import parseGeneratedEntities
 import parseGeneratedEvents
 import os
 import mysql.connector
+import json
 
 # gets the host, user, password and database from the environment variables
 # this way, one does not have to type his password in the code
@@ -23,14 +25,13 @@ conn = mysql.connector.connect(
     database=db_database
 )
 
-cursor = conn.cursor()
 cursor = conn.cursor(buffered=True)
 
 #parse the text_file
-path_of_file_to_parse = "generated_entities.txt"
-parsed_entities = parseGeneratedEntities.parse_generated_entities(path_of_file_to_parse)
 path_of_file_to_parse = "generated_events.txt"
 parsed_events = parseGeneratedEvents.parse_generated_events(path_of_file_to_parse)
+path_of_file_to_parse = "generated_entities.txt"
+parsed_entities = parseGeneratedEntities.parse_generated_entities(path_of_file_to_parse)
 
 #method to clear a tables foreign key constraints
 def clear_key_constraints(table_to_clear):
@@ -50,10 +51,10 @@ def reset_auto_increment(table_to_reset):
 
 #method to insert e.g. 'race' from a character into the race table
 #returns the id of the race to insert into the race_id table
-def insert_entity_data(table_name, table_to_insert_to, entity, conn, cursor):
+def insert_entity_data(table_name, table_to_insert_to, entity, conn, cursor) -> int:  # type: ignore
     exists_query = "SELECT IF(EXISTS(SELECT * FROM {} WHERE name LIKE %s), 'YES', 'NO')".format(table_name)
     entity_name = entity[table_name.lower()]  # assumes the entity name is a column with lowercase name
-
+    
     cursor.execute(exists_query, (entity_name,))
     result = cursor.fetchone()
 
@@ -76,7 +77,8 @@ def insert_entity_data(table_name, table_to_insert_to, entity, conn, cursor):
         return entity_id
 
 #clearing all tables before entering info again
-# clear_key_constraints("characters")
+clear_table("action")
+reset_auto_increment("action")
 clear_table("characters")
 clear_table("item")
 clear_table("enemy")
@@ -85,7 +87,59 @@ clear_table("npc")
 clear_table("team")
 clear_table("race")
 reset_auto_increment("race")
+clear_table("class")
 reset_auto_increment("class")
+
+for event in parsed_events:
+    event_type = event['Event Type']
+    event_type_parts = event_type.split('_')
+
+    entity1 = ast.literal_eval(event['Entity1'])
+    entity1_type = event_type_parts[0]
+    entity2 = ast.literal_eval(event['Entity2'])
+    entity2_type = event_type_parts[2]
+    
+    entity1_id = entity1.get('id')
+    entity2_id = entity2.get('id')
+
+    if 'Additional Entity' in event:
+        additional_entity = ast.literal_eval(event['Additional Entity'])
+        additional_entity_id = additional_entity.get('id')
+
+        query = "INSERT INTO action (event_type, entity1_id, entity1_type, entity2_id, entity2_type, entity3_id, entity3_type, value) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+        values = (event_type, entity1_id, entity1_type, entity2_id, entity2_type, additional_entity_id, event['Additional Entity Type'], event['Value'])
+        cursor.execute(query, values)
+
+        # add correct category to the entity
+        updated_entity1 = {'category' : entity1_type}
+        updated_entity2 = {'category' : entity2_type}
+        updated_additional_entity = {'category' : event['Additional Entity Type']}
+        # add the rest of the entity to the added category
+        updated_entity1.update(entity1)
+        updated_entity2.update(entity2)
+        updated_additional_entity.update(additional_entity)
+        # append the parsed entities list with the newly updated entities
+        parsed_entities.append(updated_entity1)
+        parsed_entities.append(updated_entity2)
+        parsed_entities.append(updated_additional_entity)
+    
+    else:
+        query = "INSERT INTO action (event_type, entity1_id, entity1_type, entity2_id, entity2_type, value) VALUES (%s, %s, %s, %s, %s, %s)"
+        values = (event_type, entity1_id, entity1_type, entity2_id, entity2_type, event['Value'])
+        cursor.execute(query, values)
+                
+        # add correct category to the entity
+        updated_entity1 = {'category' : entity1_type}
+        updated_entity2 = {'category' : entity2_type}
+        # add the rest of the entity to the added category
+        updated_entity1.update(entity1)
+        updated_entity2.update(entity2)
+        # append the parsed entities list with the newly updated entities
+        parsed_entities.append(updated_entity1)
+        parsed_entities.append(updated_entity2)
+
+        print(updated_entity1)
+        print(updated_entity2)
 
 for entity in parsed_entities:
     # Character
@@ -139,10 +193,6 @@ for entity in parsed_entities:
         query = "INSERT INTO team (id, name, number_of_players, kingdom_id) VALUES (%s, %s, %s, %s)"
         values = (entity['id'], entity['team_name'], entity['n_members'], kingdom_id)
         cursor.execute(query, values)
-
-# for event in parsed_events[:10]:
-#     print(event)
-
 
 conn.commit()
 cursor.close()
