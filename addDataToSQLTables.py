@@ -38,16 +38,17 @@ def clear_key_constraints(table_to_clear):
     query = "ALTER TABLE " + table_to_clear + " DISABLE KEYS;"
     cursor.execute(query)
 
+#method to reset the auto_increment of a table
+def reset_auto_increment(table_to_reset):
+    query = "ALTER TABLE " + table_to_reset + " AUTO_INCREMENT = 1"
+    cursor.execute(query)
+
 #simple method to clear a table
 def clear_table(table_to_clear):
     query = "DELETE FROM " + table_to_clear
     #print(query)
     cursor.execute(query)
-
-#method to reset the auto_increment of a table
-def reset_auto_increment(table_to_reset):
-    query = "ALTER TABLE " + table_to_reset + " AUTO_INCREMENT = 1"
-    cursor.execute(query)
+    reset_auto_increment(table_to_clear)
 
 #method to insert e.g. 'race' from a character into the race table
 #returns the id of the race to insert into the race_id table
@@ -78,17 +79,15 @@ def insert_entity_data(table_name, table_to_insert_to, entity, conn, cursor) -> 
 
 #clearing all tables before entering info again
 clear_table("action")
-reset_auto_increment("action")
 clear_table("characters")
 clear_table("item")
 clear_table("enemy")
 clear_table("event")
+clear_table("guild")
 clear_table("npc")
 clear_table("team")
 clear_table("race")
-reset_auto_increment("race")
 clear_table("class")
-reset_auto_increment("class")
 
 for event in parsed_events:
     event_type = event['Event Type']
@@ -138,60 +137,66 @@ for event in parsed_events:
         parsed_entities.append(updated_entity1)
         parsed_entities.append(updated_entity2)
 
-        print(updated_entity1)
-        print(updated_entity2)
-
 for entity in parsed_entities:
     # Character
-    if 'Character' == entity['category']:
+    if ('character' == entity['category'] or 'player' == entity['category']):
         # print(entity)
         race_id = insert_entity_data('race', 'Character', entity, conn, cursor)
         class_id = insert_entity_data('class', 'Character', entity, conn, cursor)
 
-        query = "INSERT INTO characters (id, name, race_id, class_id) VALUES (%s, %s, %s, %s)"
-        values = (entity['id'], entity['first_name'] + " " + entity['firstname'], race_id, class_id)
+        query = "INSERT INTO characters (name, race_id, class_id) VALUES (%s, %s, %s)"
+        values = (entity['first_name'] + " " + entity['firstname'], race_id, class_id)
+        cursor.execute(query, values)
+
+    # Dialogue
+    if 'dialogue' == entity['category']:
+        # print(entity)
+        query = "INSERT INTO dialogue (text) VALUES (%s)"
+        values = (entity['content'],)
         cursor.execute(query, values)
 
     # Enemy
-    if 'Enemy' == entity['category']:
+    if 'enemy' == entity['category']:
         # print(entity)
-        query = "INSERT INTO enemy (id, name, type) VALUES (%s, %s, %s)"
-        values = (entity['id'], entity['enemy_name'], entity['enemy_type'])
+        query = "INSERT INTO enemy (name, type) VALUES (%s, %s)"
+        values = (entity['enemy_name'], entity['enemy_type'])
         cursor.execute(query, values)
 
     # Events
-    if 'Event' == entity['category']:
+    if 'event' == entity['category']:
         # print(entity)
-        query = "INSERT INTO event (id, name) VALUES (%s, %s)"
-        values = (entity['id'], entity['event_name'])
+        query = "INSERT INTO event (name, time) VALUES (%s, %s)"
+        values = (entity['event_name'], entity['event_time'])
         cursor.execute(query, values)
 
     # Guilds
-    if 'GuildName' == entity['category']:
+    if 'guildname' == entity['category']:
         #print(entity)
-        query = "INSERT INTO guild"
+        query = "INSERT INTO guild (name, type, number_of_players) VALUES (%s, %s, %s)"
+        values = (entity['name'], entity['description'], entity['members'])
+        cursor.execute(query, values)
 
     # Items
-    if 'Item' == entity['category']:
+    if 'item' == entity['category']:
         # print(entity)
-        query = "INSERT INTO item (id, name) VALUES (%s, %s)"
-        values = (entity['id'], entity['item_name'])
+        query = "INSERT INTO item (name, type) VALUES (%s, %s)"
+        values = (entity['item_name'], entity['item_type'])
         cursor.execute(query, values)
 
     # NPC
-    if ('NPC' == entity['category'] or 'Vendors' == entity['category']):
+    if ('npc' == entity['category'] or 'Vendors' == entity['category']):
         # print(entity)
-        query = "INSERT INTO npc (id, name, role) VALUES (%s, %s, %s)"
-        values = (entity['id'], entity['first_name'] + " " + entity['last_name'], entity['npc_type'])
+        query = "INSERT INTO npc (name, role) VALUES (%s, %s)"
+        values = (entity['first_name'] + " " + entity['last_name'], entity['npc_type'])
         cursor.execute(query, values)
 
     # Team
-    if 'Team' == entity['category']:
+    if 'team' == entity['category']:
         # print(entity)
         kingdom_id = insert_entity_data('kingdom', 'Team', entity, conn, cursor)
         
-        query = "INSERT INTO team (id, name, number_of_players, kingdom_id) VALUES (%s, %s, %s, %s)"
-        values = (entity['id'], entity['team_name'], entity['n_members'], kingdom_id)
+        query = "INSERT INTO team (name, number_of_players, kingdom_id) VALUES (%s, %s, %s)"
+        values = (entity['team_name'], entity['n_members'], kingdom_id)
         cursor.execute(query, values)
 
 conn.commit()

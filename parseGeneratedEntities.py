@@ -11,7 +11,7 @@ def parse_generated_entities(file_to_parse):
                     current_entity['category'] = category  # Include the category
                     entities.append(current_entity)
                 current_entity = {'category': category}  # Initialize entity with category
-                category = line.strip('-').strip()  # Extract and store the category
+                category = line.strip('-').strip().lower()  # Extract and store the category
             elif '=' in line:
                 key, value = line.split('=')
                 current_entity[key.strip('"')] = value.strip('"')
