@@ -184,7 +184,7 @@ for entity in parsed_entities:
         cursor.execute(query, values)
 
     # NPC
-    if ('npc' == entity['category'] or 'Vendors' == entity['category']):
+    if ('npc' == entity['category'] or 'vendors' == entity['category']):
         # print(entity)
         query = "INSERT INTO npc (name, role) VALUES (%s, %s)"
         values = (entity['first_name'] + " " + entity['last_name'], entity['npc_type'])
